@@ -33,11 +33,11 @@ The thread running the Render Engine has mostly its own data. The interesting pa
 
 ## Extras
 
-### JAX
+### JAX (2 points)
 
 JAX is an amazing library allowing modeling code to run fast (when used right), the paradigm being quite mathematical in terms of pure functions with inputs and outputs, as well as, the support for arbitrary convoluted autodiff operations that no other library supports. All at a cost of learning to program in a more functional manner and being on the lookout for the sharp bits. 
 
-### Concepts from m1
+#### Concepts from m1
 
 There are a few concepts from m1 that are at play in the JAX ecosystem. Probably more than I can see right now, but I will try to talk about a few of them. Just as Pytorch, JAX uses **Computational Graphs**, whereas the difference between the two is that JAX's graphs are static. Thus, we need to have a full overview of our computation before executing it. Pytorch, on the other hand is using dynamic graph. 
 
@@ -45,7 +45,7 @@ Because JAX is built to use Just-in-time (JIT) compilation using the XLA compile
 
 JAX is built to be a numerical computation library with support for automatic differentiation and as such it is heavily targeted towards accelerators such as **GPU**s. The XLA (Accelerated Linear Algebra) is built to be running on all sorts of accelerators dependless on the manufacturer or type (TPU/GPU). In this light, what we learned doing our own little matrix multiplication a GPU is probably heading towards something done by professionals when translating the linear algebra operations definable in jax to be executed on the accelerators. 
 
-### Concepts from m2
+#### Concepts from m2
 
 The topic of m2 was **Concurrency** and JAX relies heavily on it when utilizing the accelerator hardware that is specifically built to run many simple operations in parallel. In JAX, we usually __vmap__ some function over a batch/array of inputs. This allows the underlying library to distribute our computation to **threads** on the accelerator as it sees fit. This is one of the reasons to why the JAX objects immutable and the functions have to be pure i.e. no side effects or states. This is to avoid the data races and weird/unsafe behaviour. What we did with **Locks** and **Message passing** between threads still has to be done internally by JAX, but they probably use same kind of ideas when distributing pieces of our array to the different threads. 
 Particularities of the different accelerators and how they are connected (if we use more GPUs at once fx.) plays a big role and for sure has internal JAX optimization for this. Whether or not the Nvidia cards are connected with NVlink has an effect as well whether the cards have distributed shared memory that we learned about in the section on **Additional Levels in the Memory Hierarchy**. 
@@ -53,9 +53,20 @@ Particularities of the different accelerators and how they are connected (if we 
 No matter what, this piece of software is quite impressive to a newbie like me. When handling many accelerators at once, it must be a challenge to bring the logic to a common denominator. (that is constatly evolving). For instance, when we did the assignment on GPU programming, it was discovered that __wgsl__ with the Vulkan backend on our system does not throw an error when we were indexing out of bounds. On assignment it was totally quiet and on retrieval it just returned the last available value. This is probably why JAX has similar out of bound handling behaviour. 
 
 
-### Performance implications
+#### Performance implications
 
 SPEEEED for linear algebra and math computations because of (a) compilation and (b) accelerator utilization. For this to be a benefit, one needs to be tired of waiting for one's mediocre model to be done training.
 The next bottleneck to handle is probably memory and feeding the accelerators fast enough to bring their utilization to the max. 
+
+### Model Distributed Parallelism (1 point)
+
+Pipeline Parallelism, as it is also called, is a solution to a problem where the model of choice is too large to fit into accelerator memory. An alternative solution could be to pick a smaller model for the task or to ask adults for bigger and more expensive hardware. 
+
+The solution in the article proposes to actally split the model into chunks (so we split up the computational graph) and distribute different chunks to a few accelerators runing in parallel. This is extremely awkward if done naively as the hardware ends up massively under-utilized. Even in case where we batch the input to do more parallel computation on the different threads, there are still times (called bubbles) where not all accelerators are utilized. 
+
+The weakness of the method is that it for sure waists compute and seems to be a clumsy solution. However, if we are Google and have all the world to fry with our hardware while beating Sam Altman to "singularity" induced by our outoregressive LLMs, this can be a great solution. 
+
+
+
 * * *
 
