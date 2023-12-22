@@ -29,3 +29,10 @@ egui = "0.21"
 egui_winit_platform = "0.18.0"
 egui_wgpu_backend = "0.23.0"
 squeezenet-burn = { git = "https://github.com/burn-rs/models", package = "squeezenet-burn", features = ["weights_embedded"], default-features = false }
+burn = { version = "0.11.1", features = ["wgpu", "ndarray", "train"] }
+burn-import = "0.11.1"
+image = "0.24.7"
+burn-tensor = "0.11.1"
+burn-ndarray = "0.11.1"
+dotenv = "0.15.0"
+serde = "1.0.193"
