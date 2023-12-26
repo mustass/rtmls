@@ -1,3 +1,4 @@
 # ignore all possible target folders in the project
-.*/target
+*/target
 ./hotdog/seefood/
+app/target/*

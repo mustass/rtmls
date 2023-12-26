@@ -3,7 +3,7 @@
 use std::{iter, time::Instant};
 
 use crossbeam_channel::Sender;
-use egui::{ClippedPrimitive, Context, FontDefinitions, FullOutput, Response, ScrollArea, Ui};
+use egui::{ClippedPrimitive, Context, FontDefinitions, FullOutput, Response, ScrollArea, Ui, RichText, Color32};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use wgpu::{
@@ -18,6 +18,12 @@ use winit::{
 
 use crate::{command::Command, GPUHandles};
 
+#[derive(PartialEq)]
+pub enum TrueLabel {
+    NotHotDog,
+    HotDog,
+}
+
 pub struct ControlPanel {
     pub window_id: WindowId,
     // Rendering state
@@ -27,10 +33,10 @@ pub struct ControlPanel {
     config: wgpu::SurfaceConfiguration,
     render_pass: RenderPass,
     // All of our buttons' state
-    should_render: bool,
-    rotate_triangle: bool,
-    triangle_speed: f32,
-    scene_path: String,
+    train_mode: bool,
+    evaluate: bool,
+    true_label: TrueLabel,
+    submit_label: bool,
 }
 
 impl ControlPanel {
@@ -44,7 +50,7 @@ impl ControlPanel {
             .with_decorations(true)
             .with_resizable(true)
             .with_transparent(false)
-            .with_title("control panel")
+            .with_title("Hot Not Dog")
             .with_inner_size(window_size)
             .build(event_loop)
             .unwrap();
@@ -85,18 +91,19 @@ impl ControlPanel {
 
         let path: String = "".to_string();
         let window_id: WindowId = window.id();
+        
 
         ControlPanel {
+            window_id,
             window,
             surface,
             config,
             render_pass,
             platform,
-            should_render: true,
-            rotate_triangle: true,
-            triangle_speed: 0.5,
-            scene_path: path,
-            window_id,
+            train_mode: false,
+            evaluate: false,
+            true_label: TrueLabel::HotDog,
+            submit_label: false,
         }
     }
 
@@ -105,20 +112,8 @@ impl ControlPanel {
     // be used until the buttons are used.
     pub fn initialize(&self, commands: &Sender<Command>) {
         commands
-            .send(Command::RotateTriangle {
-                value: self.rotate_triangle,
-            })
-            .unwrap();
-
-        commands
-            .send(Command::SetTriangleSpeed {
-                speed: self.triangle_speed,
-            })
-            .unwrap();
-
-        commands
-            .send(Command::Render {
-                value: self.should_render,
+            .send(Command::Evaluate { 
+                value: self.evaluate,
             })
             .unwrap();
     }
@@ -213,29 +208,23 @@ impl ControlPanel {
         redraw_gui: &mut bool,
     ) {
         egui::CentralPanel::default().show(context, |ui| {
-            ui.heading("control panel");
+            ui.heading("Hot Menu Dog");
 
             // Basically all of our buttons
             ScrollArea::vertical().show(ui, |ui: &mut Ui| {
                 ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
                     // Organize window button
-                    if ui.button("Organize windows").clicked() {
+                    if ui.button(RichText::new("Hot or Not").color(Color32::DARK_RED)).clicked() {
                         ui.ctx().memory_mut(|mem| mem.reset_areas());
                     }
-
-                    // Dark/Light mode button
-                    ui.horizontal(|ui: &mut Ui| {
-                        ui.label("egui theme:");
-                        egui::widgets::global_dark_light_mode_buttons(ui);
-                    });
 
                     // Render button
                     // If not checked, the renderer won't redraw
                     ui.horizontal(|ui: &mut Ui| {
-                        if ui.checkbox(&mut self.should_render, "Render").changed() {
+                        if ui.checkbox(&mut self.train_mode, "Train mode").changed() {
                             commands
-                                .send(Command::Render {
-                                    value: self.should_render,
+                                .send(Command::TrainMode{
+                                    value: self.train_mode,
                                 })
                                 .unwrap()
                         };
@@ -244,73 +233,20 @@ impl ControlPanel {
                     // Rotate triangle section
                     // Toggle, speed value and event handling
                     ui.horizontal(|ui: &mut Ui| {
-                        if ui
-                            .checkbox(&mut self.rotate_triangle, "Rotate Triangle")
-                            .changed()
-                        {
-                            commands
-                                .send(Command::RotateTriangle {
-                                    value: self.rotate_triangle,
-                                })
-                                .unwrap()
-                        };
-                        ui.label("Triangle Speed");
-                        let triangle_speed_response: Response = ui.add(
-                            egui::widgets::DragValue::new(&mut self.triangle_speed)
-                                .clamp_range(-std::f32::consts::TAU..=std::f32::consts::TAU)
-                                .fixed_decimals(1)
-                                .speed(0.1),
-                        );
-
-                        if triangle_speed_response.gained_focus() {
-                            *has_focus = true;
-                            *redraw_gui = true;
-                        }
-                        if triangle_speed_response.lost_focus() {
-                            *has_focus = false;
-                        }
-                        if triangle_speed_response.changed() {
-                            commands
-                                .send(Command::SetTriangleSpeed {
-                                    speed: self.triangle_speed,
-                                })
-                                .unwrap()
-                        };
+                        ui.label("True Label");
                     });
 
-                    // Load scene section. You'll have to fill out this
-                    // functionality yourself.
                     ui.horizontal(|ui: &mut Ui| {
-                        if ui.button("Load Scene").changed() {
-                            commands
-                                .send(Command::LoadScene {
-                                    path: self.scene_path.clone(),
-                                })
-                                .unwrap();
-                            *redraw_gui = true;
-                        };
-                        ui.label("Path");
-
-                        let text_edit_singleline_response: Response =
-                            ui.text_edit_singleline(&mut self.scene_path);
-                        if text_edit_singleline_response.gained_focus() {
-                            *has_focus = true;
-                            *redraw_gui = true;
-                        }
-                        if text_edit_singleline_response.lost_focus() {
-                            *has_focus = false;
-                        }
+                        ui.selectable_value(&mut self.true_label, TrueLabel::HotDog, "HotDog");
                     });
 
-                    // This button opens a file dialog and 
-                    // sets the scene_path to that path.
-                    ui.horizontal(|ui: &mut Ui| {
-                        if ui.button("Open file..").clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.scene_path = path.display().to_string();
-                            }
-                        }
-                    });
+                    if ui.button(RichText::new("Submit").color(Color32::DARK_BLUE)).clicked() {
+                        commands
+                            .send(Command::TrueLabel {
+                                value: self.true_label,
+                            })
+                            .unwrap()
+                    }
                 });
             });
         });

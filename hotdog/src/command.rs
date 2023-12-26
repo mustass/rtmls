@@ -1,11 +1,11 @@
 use winit::dpi::PhysicalSize;
-
+use crate::control_panel::TrueLabel;
 pub enum Command {
     Resize { new_size: PhysicalSize<u32> },
-    RotateTriangle { value: bool },
-    SetTriangleSpeed { speed: f32 },
-    LoadScene { path: String },
-    Render { value: bool },
+    TrainMode { value: bool },
+    Evaluate {value: bool },
+    SubmitLabel { value: bool },
+    TrueLabel { value: TrueLabel },
     KeyEventW,
     KeyEventA,
     KeyEventS,
