@@ -6,9 +6,15 @@ use eframe::{
 use rand::seq::SliceRandom;
 use std::fmt;
 
+use hotnotdog::model::{
+    label::LABELS_DOG, normalizer::Normalizer, squeezed_ckassifier::HotNotDogClassifier,
+    squeezenet::Model,
+};
+
 #[derive(Default)]
 pub struct HotNotDogApp {
     stream: Vec<HotNotDogsData>,
+    model: HotNotDogClassifier,
     true_label: TrueLabel,
     show_prediction: bool,
     show_training: bool,
@@ -114,8 +120,9 @@ impl App for HotNotDogApp {
 
 impl HotNotDogApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        HotNotDogApp {
+        Self {
             stream: load_data(),
+            model: HotNotDogClassifier::new(),
             true_label: TrueLabel::HotDog,
             show_prediction: false,
             show_training: false,
