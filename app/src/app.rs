@@ -6,10 +6,7 @@ use eframe::{
 use rand::seq::SliceRandom;
 use std::fmt;
 
-use hotnotdog::model::{
-    label::LABELS_DOG, normalizer::Normalizer, squeezed_ckassifier::HotNotDogClassifier,
-    squeezenet::Model,
-};
+use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
 
 #[derive(Default)]
 pub struct HotNotDogApp {

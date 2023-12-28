@@ -8,8 +8,8 @@ use burn::nn::pool::MaxPool2dConfig;
 use burn::nn::Dropout;
 use burn::nn::DropoutConfig;
 use burn::nn::PaddingConfig2d;
-//use burn::nn::LinearConfig;
-//use burn::nn::Linear;
+use burn::nn::LinearConfig;
+use burn::nn::Linear;
 use burn::record::BinBytesRecorder;
 use burn::record::FullPrecisionSettings;
 use burn::record::Recorder;
@@ -55,7 +55,7 @@ pub struct Model<B: Backend> {
     phantom: core::marker::PhantomData<B>,
 }
 
-static EMBEDDED_STATES: &[u8] = include_bytes!("../model_checkpoints/squeezenet1.bin");
+static EMBEDDED_STATES: &[u8] = include_bytes!("/home/sm/Dropbox/DTU/rtc/rtmls/app/model_checkpoints/squeezenet1.bin");
 
 impl<B: Backend> Default for Model<B> {
     fn default() -> Self {
@@ -920,7 +920,7 @@ impl<B: Backend> Classifier<B> {
     }
 
     #[allow(dead_code)]
-    pub fn new_from_squeezenet(&model: &Model) -> Self {
+    pub fn new_from_squeezenet(model: &Model<B>) -> Self {
         // Take all the layers from the squeezenet model
         let conv2d1 = model.conv2d1.clone();
         let maxpool2d1 = model.maxpool2d1.clone();

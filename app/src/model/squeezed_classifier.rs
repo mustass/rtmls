@@ -1,6 +1,18 @@
+
+use burn::backend::NdArray;
+use burn::tensor::Tensor;
+
+use crate::model::normalizer::Normalizer;
+use crate::model::squeezenet;
+use crate::model::label::LABELS_DOG;
+
+type Backend = NdArray<f32>;
+
+
+#[derive(Default)]
 pub struct HotNotDogClassifier {
     model: squeezenet::Classifier<Backend>,
-    normalizer: Normalizer,
+    normalizer: Normalizer<Backend>,
 }
 
 impl HotNotDogClassifier {
@@ -12,13 +24,14 @@ impl HotNotDogClassifier {
         Self { model, normalizer }
     }
 
-    pub fn predict(&self, image: Tensor<Backend, 4>) -> Tensor<Backend, 1> {
+    pub fn predict(&self, image: Tensor<Backend, 4>) -> &'static str {
         let image = self.normalizer.normalize(image);
-        self.model.forward(&image);
+        let output = self.model.forward(image);
         // Get the argmax of the output
         let arg_max = output.argmax(1).into_scalar() as usize;
 
         // Get the label from the argmax
-        let label = LABELS[arg_max];
+        let label = LABELS_DOG[arg_max];
+        label
     }
 }
