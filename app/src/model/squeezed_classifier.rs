@@ -1,6 +1,6 @@
 
-use burn::backend::NdArray;
-use burn::tensor::Tensor;
+use burn::{backend::NdArray, nn::loss::CrossEntropyLoss};
+use burn::tensor::{Tensor, Int};
 
 use crate::model::normalizer::Normalizer;
 use crate::model::squeezenet;

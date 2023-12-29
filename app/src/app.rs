@@ -14,6 +14,7 @@ pub struct HotNotDogApp {
     model: HotNotDogClassifier,
     true_label: TrueLabel,
     show_prediction: bool,
+    prediction: Option<TrueLabel>,
     show_training: bool,
     current_image: usize,
 }
@@ -63,7 +64,10 @@ impl App for HotNotDogApp {
 
                     let image = self.model.load_image(&self.stream[self.current_image].image_path);
                     let prediction = self.model.predict(image);
-                    println!("Prediction: {}", prediction);
+                    self.prediction = Some(match prediction {
+                        "hot_dog" => TrueLabel::HotDog,
+                        _ => TrueLabel::NotHotDog,
+                    });
                     self.show_prediction = true;
                 }
                 if ui.button("Train Me").clicked() {
@@ -76,12 +80,8 @@ impl App for HotNotDogApp {
             if self.show_prediction {
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.label("I see a");
-                    if self.stream[self.current_image].label {
-                        ui.label("HotDog");
-                    } else {
-                        ui.label("Not HotDog");
-                    }
+                    ui.label("Prediction:");
+                    ui.label(self.prediction.as_ref().unwrap().to_string());
                 });
             }
 
@@ -126,6 +126,7 @@ impl HotNotDogApp {
             model: HotNotDogClassifier::new(),
             true_label: TrueLabel::HotDog,
             show_prediction: false,
+            prediction: None,
             show_training: false,
             current_image: 0,
         }
