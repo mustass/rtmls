@@ -6,7 +6,7 @@ use crate::model::normalizer::Normalizer;
 use crate::model::squeezenet;
 use crate::model::label::LABELS_DOG;
 use image::{self, GenericImageView, Pixel};
-type Backend = NdArray<f32>;
+pub type Backend = NdArray<f32>;
 
 
 #[derive(Default)]

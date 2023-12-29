@@ -1,3 +1,4 @@
+use burn::tensor::Tensor;
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
@@ -7,35 +8,37 @@ use rand::seq::SliceRandom;
 use std::fmt;
 
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
+use hotnotdog::model::squeezed_classifier::Backend;
 
 #[derive(Default)]
 pub struct HotNotDogApp {
     stream: Vec<HotNotDogsData>,
     model: HotNotDogClassifier,
-    true_label: TrueLabel,
+    true_label: Label,
     show_prediction: bool,
-    prediction: Option<TrueLabel>,
+    prediction: Option<Label>,
     show_training: bool,
     current_image: usize,
+    image_array: Option<Tensor<Backend, 4>>,
 }
 
 struct HotNotDogsData {
     image_path: String,
-    label: bool,
+    label: Label,
 }
 
 #[derive(PartialEq, Default)]
-pub enum TrueLabel {
+pub enum Label {
     #[default]
     NotHotDog,
     HotDog,
 }
 
-impl fmt::Display for TrueLabel {
+impl fmt::Display for Label {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            TrueLabel::NotHotDog => write!(f, "NotHotDog"),
-            TrueLabel::HotDog => write!(f, "HotDog"),
+            Label::NotHotDog => write!(f, "NotHotDog"),
+            Label::HotDog => write!(f, "HotDog"),
         }
     }
 }
@@ -62,11 +65,10 @@ impl App for HotNotDogApp {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
-                    let image = self.model.load_image(&self.stream[self.current_image].image_path);
-                    let prediction = self.model.predict(image);
+                    let prediction = self.model.predict(self.image_array.clone().unwrap());
                     self.prediction = Some(match prediction {
-                        "hot_dog" => TrueLabel::HotDog,
-                        _ => TrueLabel::NotHotDog,
+                        "hot_dog" => Label::HotDog,
+                        _ => Label::NotHotDog,
                     });
                     self.show_prediction = true;
                 }
@@ -83,6 +85,11 @@ impl App for HotNotDogApp {
                     ui.label("Prediction:");
                     ui.label(self.prediction.as_ref().unwrap().to_string());
                 });
+
+                ui.horizontal(|ui| {
+                    ui.label("Truth:");
+                    ui.label(self.stream[self.current_image].label.to_string());
+                });
             }
 
             if self.show_training {
@@ -90,8 +97,8 @@ impl App for HotNotDogApp {
                 ui.label("Train Me!");
                 // checkbox with two options
                 ui.horizontal(|ui| {
-                    ui.selectable_value(&mut self.true_label, TrueLabel::HotDog, "HotDog");
-                    ui.selectable_value(&mut self.true_label, TrueLabel::NotHotDog, "NotHotDog");
+                    ui.selectable_value(&mut self.true_label, Label::HotDog, "HotDog");
+                    ui.selectable_value(&mut self.true_label, Label::NotHotDog, "NotHotDog");
                 });
 
                 if ui
@@ -121,14 +128,18 @@ impl App for HotNotDogApp {
 
 impl HotNotDogApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let stream = load_data();
+        let model = HotNotDogClassifier::new();
+        let image = model.load_image(&stream[0].image_path);
         Self {
-            stream: load_data(),
-            model: HotNotDogClassifier::new(),
-            true_label: TrueLabel::HotDog,
+            stream: stream,
+            model: model,
+            true_label: Label::HotDog,
             show_prediction: false,
             prediction: None,
             show_training: false,
             current_image: 0,
+            image_array: Some(image),
         }
     }
 
@@ -140,6 +151,7 @@ impl HotNotDogApp {
 
         self.show_prediction = false;
         self.show_training = false;
+        self.image_array = Some(self.model.load_image(&self.stream[self.current_image].image_path));
     }
 }
 
@@ -161,7 +173,7 @@ fn load_data() -> Vec<HotNotDogsData> {
         let path_str = path.to_str().unwrap();
         stream.push(HotNotDogsData {
             image_path: path_str.to_string(),
-            label: true,
+            label: Label::HotDog,
         });
     }
 
@@ -171,7 +183,7 @@ fn load_data() -> Vec<HotNotDogsData> {
         let path_str = path.to_str().unwrap();
         stream.push(HotNotDogsData {
             image_path: path_str.to_string(),
-            label: false,
+            label: Label::NotHotDog,
         });
     }
 
