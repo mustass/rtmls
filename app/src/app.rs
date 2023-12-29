@@ -60,6 +60,10 @@ impl App for HotNotDogApp {
             ui.horizontal(|ui| {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
+
+                    let image = self.model.load_image(&self.stream[self.current_image].image_path);
+                    let prediction = self.model.predict(image);
+                    println!("Prediction: {}", prediction);
                     self.show_prediction = true;
                 }
                 if ui.button("Train Me").clicked() {
