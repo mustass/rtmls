@@ -1,3 +1,4 @@
+use burn::tensor::backend::AutodiffBackend;
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
@@ -6,12 +7,16 @@ use eframe::{
 use rand::seq::SliceRandom;
 use std::fmt;
 
+use burn::backend::wgpu::WgpuDevice;
+use burn::backend::{Autodiff, Wgpu};
+
+
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
 
 #[derive(Default)]
 pub struct HotNotDogApp {
     stream: Vec<HotNotDogsData>,
-    model: HotNotDogClassifier,
+    model: HotNotDogClassifier<Autodiff<Wgpu>>,
     true_label: TrueLabel,
     show_prediction: bool,
     prediction: Option<TrueLabel>,
@@ -58,7 +63,7 @@ impl App for HotNotDogApp {
             ui.label("Predict!");
             // add button to run prediction on displayed image
 
-            ui.horizontal(|ui| {
+/*             ui.horizontal(|ui| {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
@@ -74,7 +79,7 @@ impl App for HotNotDogApp {
                     println!("Training enabeled");
                     self.show_training = true;
                 }
-            });
+            }); */
 
             // add separator
             if self.show_prediction {
