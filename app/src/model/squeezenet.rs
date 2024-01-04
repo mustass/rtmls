@@ -7,9 +7,9 @@ use burn::nn::pool::MaxPool2d;
 use burn::nn::pool::MaxPool2dConfig;
 use burn::nn::Dropout;
 use burn::nn::DropoutConfig;
-use burn::nn::PaddingConfig2d;
-use burn::nn::LinearConfig;
 use burn::nn::Linear;
+use burn::nn::LinearConfig;
+use burn::nn::PaddingConfig2d;
 use burn::record::BinBytesRecorder;
 use burn::record::FullPrecisionSettings;
 use burn::record::Recorder;
@@ -55,7 +55,8 @@ pub struct Model<B: Backend> {
     phantom: core::marker::PhantomData<B>,
 }
 
-static EMBEDDED_STATES: &[u8] = include_bytes!("/home/sm/Dropbox/DTU/rtc/rtmls/app/model_checkpoints/squeezenet1.bin");
+static EMBEDDED_STATES: &[u8] =
+    include_bytes!("/home/sm/Dropbox/DTU/rtc/rtmls/app/model_checkpoints/squeezenet1.bin");
 
 impl<B: Backend> Default for Model<B> {
     fn default() -> Self {

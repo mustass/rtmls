@@ -10,7 +10,6 @@ use std::fmt;
 use burn::backend::wgpu::WgpuDevice;
 use burn::backend::{Autodiff, Wgpu};
 
-
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
 
 #[derive(Default)]
@@ -63,7 +62,7 @@ impl App for HotNotDogApp {
             ui.label("Predict!");
             // add button to run prediction on displayed image
 
-/*             ui.horizontal(|ui| {
+            /*             ui.horizontal(|ui| {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
