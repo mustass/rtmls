@@ -6,6 +6,13 @@ This repository can be private, opposite to being a fork of the course material.
 ## The project 
 The hot-dog / not-hot-dog app is in the `app` directory.
 
+To do:
+
+- [ ] Make the model predict correctly after some training. Just debug the training and make sure it works
+- [ ] Split two copies of the model to threads and communicate rather than run on one thread?
+- [ ] Make the images downloaded from somewhere and not be hardcoded
+- [ ] 
+
 
 ## Architecture overview assignment 
 
