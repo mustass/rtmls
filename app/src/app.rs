@@ -11,6 +11,7 @@ use burn::backend::wgpu::WgpuDevice;
 use burn::backend::{Autodiff, Wgpu};
 
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
+use hotnotdog::model::squeezed_classifier::load_image;
 
 #[derive(Default)]
 pub struct HotNotDogApp {
@@ -62,11 +63,11 @@ impl App for HotNotDogApp {
             ui.label("Predict!");
             // add button to run prediction on displayed image
 
-            /*             ui.horizontal(|ui| {
+            ui.horizontal(|ui| {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
-                    let image = self.model.load_image(&self.stream[self.current_image].image_path);
+                    let image = load_image(&self.stream[self.current_image].image_path);
                     let prediction = self.model.predict(image);
                     self.prediction = Some(match prediction {
                         "hot_dog" => TrueLabel::HotDog,
@@ -78,7 +79,7 @@ impl App for HotNotDogApp {
                     println!("Training enabeled");
                     self.show_training = true;
                 }
-            }); */
+            });
 
             // add separator
             if self.show_prediction {
