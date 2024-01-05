@@ -61,13 +61,16 @@ impl<B: AutodiffBackend> HotNotDogClassifier<B> {
         let image = self.normalizer.normalize(image);
         let prediction = self.model.forward(image);
         let loss = CrossEntropyLoss::new(None).forward(prediction.clone(), label.clone());
+        // print the loss please
+        println!("Loss: {}", loss);
 
         // Gradients for the current backward pass
         let grads = loss.backward();
         // Gradients linked to each parameter of the model.
         let grads = GradientsParams::from_grads(grads, &self.model);
+        
         // Update the parameters of the model.
-        let updated_model = self.optimizer.step(0.0001, self.model.clone(), grads);
+        let updated_model = self.optimizer.step(0.10, self.model.clone(), grads);
         self.model = updated_model;
     }
 }

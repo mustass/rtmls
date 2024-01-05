@@ -67,7 +67,7 @@ impl App for HotNotDogApp {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
-                    let image = load_image(&self.stream[self.current_image].image_path);
+                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
                     let prediction = self.model.predict(image);
                     self.prediction = Some(match prediction {
                         "hot_dog" => TrueLabel::HotDog,
@@ -104,6 +104,15 @@ impl App for HotNotDogApp {
                     .clicked()
                 {
                     println!("Submitting");
+
+                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
+                    let label = match self.true_label {
+                        TrueLabel::HotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([1]),
+                        TrueLabel::NotHotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([0]),
+                    };
+
+                    self.model.train(image, label);
+
                     println!("True label: {}", self.true_label);
                 }
             }
