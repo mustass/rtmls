@@ -1,3 +1,4 @@
+use burn::tensor::backend::AutodiffBackend;
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
@@ -6,12 +7,16 @@ use eframe::{
 use rand::seq::SliceRandom;
 use std::fmt;
 
+use burn::backend::wgpu::WgpuDevice;
+use burn::backend::{Autodiff, Wgpu};
+
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
+use hotnotdog::model::squeezed_classifier::load_image;
 
 #[derive(Default)]
 pub struct HotNotDogApp {
     stream: Vec<HotNotDogsData>,
-    model: HotNotDogClassifier,
+    model: HotNotDogClassifier<Autodiff<Wgpu>>,
     true_label: TrueLabel,
     show_prediction: bool,
     prediction: Option<TrueLabel>,
@@ -62,7 +67,7 @@ impl App for HotNotDogApp {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
-                    let image = self.model.load_image(&self.stream[self.current_image].image_path);
+                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
                     let prediction = self.model.predict(image);
                     self.prediction = Some(match prediction {
                         "hot_dog" => TrueLabel::HotDog,
@@ -99,6 +104,15 @@ impl App for HotNotDogApp {
                     .clicked()
                 {
                     println!("Submitting");
+
+                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
+                    let label = match self.true_label {
+                        TrueLabel::HotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([1]),
+                        TrueLabel::NotHotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([0]),
+                    };
+
+                    self.model.train(image, label);
+
                     println!("True label: {}", self.true_label);
                 }
             }
