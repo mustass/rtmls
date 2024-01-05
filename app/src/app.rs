@@ -158,13 +158,11 @@ impl HotNotDogApp {
 }
 
 fn load_data() -> Vec<HotNotDogsData> {
-    // all the hotdog images are in /home/sm/Dropbox/DTU/rtc/rtmls/hotdog/seefood/train/hot_dog/
-    // all the not hotdog images are in /home/sm/Dropbox/DTU/rtc/rtmls/hotdog/seefood/train/not_hot_dog/
 
     let mut stream: Vec<HotNotDogsData> = Vec::new();
 
-    let hotdog_path = "/home/sm/Dropbox/DTU/rtc/rtmls/hotdog/seefood/train/hot_dog/";
-    let not_hotdog_path = "/home/sm/Dropbox/DTU/rtc/rtmls/hotdog/seefood/train/not_hot_dog/";
+    let hotdog_path = "./artifacts/seefood_imgs/train/hot_dog/";
+    let not_hotdog_path = "./artifacts/seefood_imgs/train/not_hot_dog/";
 
     let hotdog_files = std::fs::read_dir(hotdog_path).unwrap();
     let not_hotdog_files = std::fs::read_dir(not_hotdog_path).unwrap();
