@@ -4,7 +4,7 @@ This repository can be private, opposite to being a fork of the course material.
 
 
 ## The project 
-IS to-do
+The hot-dog / not-hot-dog app is in the `app` directory.
 
 
 ## Architecture overview assignment 
