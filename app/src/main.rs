@@ -1,3 +1,5 @@
+use burn::backend::Autodiff;
+use burn::backend::Wgpu;
 use eframe::egui;
 use eframe::run_native;
 
@@ -14,9 +16,8 @@ fn main() {
         "HotNotDog",
         native_options,
         Box::new(|cc| {
-            // Add the egui_extras crate as a dependency
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            Box::new(HotNotDogApp::new(cc))
+            Box::new(HotNotDogApp::<Autodiff<Wgpu>>::new(cc))
         }),
-    ); // Added closing parenthesis here
+    ); 
 }

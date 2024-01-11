@@ -1,33 +1,27 @@
-use burn::tensor::backend::AutodiffBackend;
+use crossbeam_channel::{Sender, Receiver};
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
     App,
 };
-use rand::seq::SliceRandom;
 use std::fmt;
 
-use burn::backend::wgpu::WgpuDevice;
-use burn::backend::{Autodiff, Wgpu};
+use burn::{backend::{Autodiff, Wgpu}, tensor::{backend::Backend, Float, Tensor, Int, Data}};
 
-use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
+use hotnotdog::utils::{load_data, HotNotDogsData, Command};
 use hotnotdog::model::squeezed_classifier::load_image;
 
 #[derive(Default)]
-pub struct HotNotDogApp {
+pub struct HotNotDogApp<B:Backend> {
     stream: Vec<HotNotDogsData>,
-    model: HotNotDogClassifier<Autodiff<Wgpu>>,
     true_label: TrueLabel,
+    prediction: TrueLabel,
     show_prediction: bool,
-    prediction: Option<TrueLabel>,
     show_training: bool,
     current_image: usize,
+    _marker: std::marker::PhantomData<B>,
 }
 
-struct HotNotDogsData {
-    image_path: String,
-    label: bool,
-}
 
 #[derive(PartialEq, Default)]
 pub enum TrueLabel {
@@ -35,6 +29,7 @@ pub enum TrueLabel {
     NotHotDog,
     HotDog,
 }
+
 
 impl fmt::Display for TrueLabel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -45,19 +40,14 @@ impl fmt::Display for TrueLabel {
     }
 }
 
-impl App for HotNotDogApp {
-    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
-        CentralPanel::default().show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.heading("Hot or Not Dog");
-                // concat
-                let mut path = String::new();
-                path.push_str("file://");
-                path.push_str(&self.stream[self.current_image].image_path);
+impl<B: Backend> App for HotNotDogApp<B> {
+    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame, sender, reciever )
+    {
 
-                ui.image(path);
-            })
-        });
+        let no_tensor: Tensor<B, 1, Int> = Tensor::<B, 1, Int>::from_data(Data::<i64, 1>::from([0 as i64]).convert());
+        let yes_tensor: Tensor<B, 1, Int> = Tensor::<B, 1, Int>::from_data(Data::<i64, 1>::from([1 as i64]).convert());
+
+
         SidePanel::right("side_panel").show(ctx, |ui| {
             ui.heading("Play the Hotdog Game");
             ui.label("Predict!");
@@ -67,12 +57,21 @@ impl App for HotNotDogApp {
                 if ui.button("Predict").clicked() {
                     println!("Predicting");
 
-                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
-                    let prediction = self.model.predict(image);
-                    self.prediction = Some(match prediction {
-                        "hot_dog" => TrueLabel::HotDog,
-                        _ => TrueLabel::NotHotDog,
-                    });
+                    let image: burn::tensor::Tensor<B, 4> = load_image(&self.stream[self.current_image].image_path);
+                    sender.send(Command::Predict{image}).unwrap();
+                    let prediction = reciever.recv().unwrap();
+                    // access the prediction
+                    let prediction = match prediction {
+                        Command::Prediction{value} => value,
+                        _ => panic!("Wrong command"),
+                    };
+
+                    self.prediction = match prediction {
+                        "hotdog" => TrueLabel::HotDog,
+                        "not_hotdog" => TrueLabel::NotHotDog,
+                        _ => panic!("Wrong prediction"),
+                    };
+
                     self.show_prediction = true;
                 }
                 if ui.button("Train Me").clicked() {
@@ -86,7 +85,7 @@ impl App for HotNotDogApp {
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.label("Prediction:");
-                    ui.label(self.prediction.as_ref().unwrap().to_string());
+                    ui.label(self.prediction.to_string());
                 });
             }
 
@@ -105,13 +104,13 @@ impl App for HotNotDogApp {
                 {
                     println!("Submitting");
 
-                    let image: burn::tensor::Tensor<Autodiff<Wgpu>, 4> = load_image(&self.stream[self.current_image].image_path);
+                    let image: burn::tensor::Tensor<B, 4> = load_image(&self.stream[self.current_image].image_path);
                     let label = match self.true_label {
-                        TrueLabel::HotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([1]),
-                        TrueLabel::NotHotDog => burn::tensor::Tensor::<Autodiff<Wgpu>, 1, burn::tensor::Int>::from_data([0]),
+                        TrueLabel::HotDog => Tensor::<B, 1, Int>::from_data(Data::<i64, 1>::from([1 as i64]).convert()),
+                        TrueLabel::NotHotDog => Tensor::<B, 1, Int>::from_data(Data::<i64, 1>::from([0 as i64]).convert())
                     };
 
-                    self.model.train(image, label);
+                    sender.send(Command::Train{image, label}).unwrap();
 
                     println!("True label: {}", self.true_label);
                 }
@@ -133,16 +132,16 @@ impl App for HotNotDogApp {
     }
 }
 
-impl HotNotDogApp {
+impl<B:Backend> HotNotDogApp<B> {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         Self {
             stream: load_data(),
-            model: HotNotDogClassifier::new(),
             true_label: TrueLabel::HotDog,
+            prediction: TrueLabel::HotDog,
             show_prediction: false,
-            prediction: None,
             show_training: false,
             current_image: 0,
+            _marker: std::marker::PhantomData,
         }
     }
 
@@ -157,38 +156,3 @@ impl HotNotDogApp {
     }
 }
 
-fn load_data() -> Vec<HotNotDogsData> {
-
-    let mut stream: Vec<HotNotDogsData> = Vec::new();
-
-    let hotdog_path = "./artifacts/seefood_imgs/train/hot_dog/";
-    let not_hotdog_path = "./artifacts/seefood_imgs/train/not_hot_dog/";
-
-    let hotdog_files = std::fs::read_dir(hotdog_path).unwrap();
-    let not_hotdog_files = std::fs::read_dir(not_hotdog_path).unwrap();
-
-    for entry in hotdog_files {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        let path_str = path.to_str().unwrap();
-        stream.push(HotNotDogsData {
-            image_path: path_str.to_string(),
-            label: true,
-        });
-    }
-
-    for entry in not_hotdog_files {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        let path_str = path.to_str().unwrap();
-        stream.push(HotNotDogsData {
-            image_path: path_str.to_string(),
-            label: false,
-        });
-    }
-
-    // shuffle the stream
-    stream.shuffle(&mut rand::thread_rng());
-
-    stream
-}

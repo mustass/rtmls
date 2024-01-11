@@ -1,9 +1,9 @@
 use burn::{
     nn::loss::CrossEntropyLoss,
     optim::{adaptor::OptimizerAdaptor, GradientsParams, Optimizer, Sgd, SgdConfig},
-    tensor::Data,
+    tensor::{Data, Float},
 };
-
+use crossbeam_channel::{Receiver, TryRecvError, Sender};
 use crate::model::label::LABELS_DOG;
 use crate::model::normalizer::Normalizer;
 use crate::model::squeezenet;
@@ -14,11 +14,13 @@ use burn::tensor::{
 use image::{self, GenericImageView, Pixel};
 
 use super::squeezenet::Classifier;
+use super::super::utils::Command;
 use num_traits::cast::ToPrimitive;
 pub struct HotNotDogClassifier<B: AutodiffBackend> {
     model: Classifier<B>,
     normalizer: Normalizer<B>,
     pub optimizer: OptimizerAdaptor<Sgd<B::InnerBackend>, Classifier<B>, B>,
+    shutdown: bool,
 }
 
 impl<B: AutodiffBackend> Default for HotNotDogClassifier<B> {
@@ -27,6 +29,7 @@ impl<B: AutodiffBackend> Default for HotNotDogClassifier<B> {
             model: squeezenet::Classifier::<B>::default(),
             normalizer: Normalizer::<B>::default(),
             optimizer: SgdConfig::new().init(),
+            shutdown: false,
         }
     }
 }
@@ -42,6 +45,7 @@ impl<B: AutodiffBackend> HotNotDogClassifier<B> {
             model,
             normalizer,
             optimizer: optim,
+            shutdown: false,
         }
     }
 
@@ -73,11 +77,40 @@ impl<B: AutodiffBackend> HotNotDogClassifier<B> {
         let updated_model = self.optimizer.step(0.10, self.model.clone(), grads);
         self.model = updated_model;
     }
+
+    pub fn shutdown(&mut self) {}
+
+    pub fn run_loop(&mut self, command_receiver: Receiver<Command<B>>, command_sender: Sender<Command<B>>) {
+        while !self.shutdown {
+            loop {
+                let result: Result<Command<B>, TryRecvError> = command_receiver.try_recv();
+                if result.is_err() {
+                    break;
+                }
+                let command: Command<B> = result.unwrap();
+                match command {
+                    Command::Predict{image} => {
+                       let label = self.predict(image);
+                          command_sender.send(Command::Prediction{value: label}).unwrap();
+                    }
+                    Command::Train{image, label} => {
+                        self.train(image, label);
+                    }
+                    Command::Shutdown { value } => {
+                        if value {
+                            self.shutdown = true;
+                        }
+                    }
+                    Command::Prediction {value: _ } => {}
+                }
+            }
+        }
+
+        self.shutdown();
+    }
 }
 
 pub fn load_image<B: Backend>(path: &str) -> Tensor<B, 4>
-where
-    Data<<B as Backend>::FloatElem, 3>: From<[[[f32; 224]; 224]; 3]>,
 {
     let img = image::open(&path).unwrap_or_else(|_| panic!("Failed to load image: {path}"));
     let resized_img = img.resize_exact(224, 224, image::imageops::FilterType::Lanczos3);
@@ -92,6 +125,9 @@ where
             img_array[2][y][x] = rgb[2] as f32 / 255.0;
         }
     }
-    let image_input = Tensor::<B, 3>::from_data(img_array).reshape([1, 3, 224, 224]);
+    let data = Data::<f32, 3>::from(img_array);
+    let tensor = Tensor::<B, 3>::from_data(data.convert());
+    let image_input = tensor.reshape([1, 3, 224, 224]);
+            
     image_input
 }

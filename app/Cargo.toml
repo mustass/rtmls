@@ -18,3 +18,5 @@ burn = { version = "0.11.1", features = ["ndarray", "wgpu", "train"] }
 burn-import = "0.11.1"
 serde = "1.0.193"
 num-traits = "0.2.17"
+crossbeam = "0.8.4"
+crossbeam-channel = "0.5.11"
