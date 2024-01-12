@@ -19,5 +19,5 @@ To do:
 - The overview of the architecture and essays on JAX (2pt) and Model Distributed Parallelism (1pt) are [here](https://github.com/mustass/rtmls/blob/main/architecture_analysis_handin/handin.md).
 
 ## GPU handin 
-The code is [here](https://github.com/mustass/rtmls/tree/main/gpu_hand_in/src) and the associated text (just some learnings and ansers to the questions posed in the assignment) are [here](https://github.com/mustass/rtmls/blob/main/gpu_hand_in/handin.md).
+The code is [here](https://github.com/mustass/rtmls/tree/main/gpu_hand_in/src) and the associated text (just some learnings) are [here](https://github.com/mustass/rtmls/blob/main/gpu_hand_in/handin.md).
 
