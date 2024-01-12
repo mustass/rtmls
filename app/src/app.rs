@@ -1,4 +1,3 @@
-use burn::tensor::backend::AutodiffBackend;
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
@@ -7,7 +6,6 @@ use eframe::{
 use rand::seq::SliceRandom;
 use std::fmt;
 
-use burn::backend::wgpu::WgpuDevice;
 use burn::backend::{Autodiff, Wgpu};
 
 use hotnotdog::model::squeezed_classifier::HotNotDogClassifier;
