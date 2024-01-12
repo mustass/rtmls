@@ -1,4 +1,3 @@
-use crossbeam_channel::{Sender, Receiver};
 use eframe::{
     egui::{CentralPanel, RichText, SidePanel},
     epaint::Color32,
@@ -6,7 +5,7 @@ use eframe::{
 };
 use std::fmt;
 
-use burn::{backend::{Autodiff, Wgpu}, tensor::{backend::Backend, Float, Tensor, Int, Data}};
+use burn::{backend::{Autodiff, Wgpu}, tensor::{backend::Backend, Data, Int, Tensor}};
 
 use hotnotdog::utils::{load_data, HotNotDogsData, Command};
 use hotnotdog::model::squeezed_classifier::load_image;

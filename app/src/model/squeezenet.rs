@@ -56,7 +56,7 @@ pub struct Model<B: Backend> {
 }
 
 static EMBEDDED_STATES: &[u8] =
-    include_bytes!("/home/sm/Dropbox/DTU/rtc/rtmls/app/artifacts/model_checkpoints/squeezenet1.bin");
+    include_bytes!("./model_checkpoints/squeezenet1.bin");
 
 impl<B: Backend> Default for Model<B> {
     fn default() -> Self {

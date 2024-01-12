@@ -1,7 +1,7 @@
 use burn::{
     nn::loss::CrossEntropyLoss,
     optim::{adaptor::OptimizerAdaptor, GradientsParams, Optimizer, Sgd, SgdConfig},
-    tensor::{Data, Float},
+    tensor::Data,
 };
 use crossbeam_channel::{Receiver, TryRecvError, Sender};
 use crate::model::label::LABELS_DOG;

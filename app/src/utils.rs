@@ -1,6 +1,5 @@
-use burn::{tensor::{Tensor, backend::Backend}, backend::{Autodiff, Wgpu}};
+use burn::tensor::{Tensor, backend::Backend};
 use rand::seq::SliceRandom;
-use serde::de;
 
 pub struct HotNotDogsData {
     pub image_path: String,
