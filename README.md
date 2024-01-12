@@ -9,7 +9,7 @@ The hot-dog / not-hot-dog app is in the `app` directory.
 To do:
 
 - [x] Make the model predict correctly after some training. Just debug the training and make sure it works
-- [ ] Split two copies of the model to threads and communicate rather than run on one thread? EDIT: Kinda started on the `threads` branch.
+- [ ] Split two copies of the model to threads and communicate rather than run on one thread? EDIT: Kinda started on the `threading` branch [here](https://github.com/mustass/rtmls/tree/threading).
 - [x] Make the images a part of repo.
 - [x] Make the model path not absolute.
 
